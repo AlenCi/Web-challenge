@@ -1,5 +1,5 @@
 // src/sections/user/view/user-view.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import Card from '@mui/material/Card';
@@ -12,125 +12,145 @@ import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-
+import TableEmptyRows from '../table-empty-rows';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 
 import UserTableRow from '../user-table-row';
 import UserTableHead from '../user-table-head';
 import UserDetailsModal from '../user-details-modal';
+import { emptyRows, applyFilter, getComparator } from '../utils';
 
 export default function UserView({ users }) {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [filterName, setFilterName] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState(users);
+    const [page, setPage] = useState(0);
+    const [order, setOrder] = useState('asc');
+    const [orderBy, setOrderBy] = useState('firstName');
+    const [filterName, setFilterName] = useState('');
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    const filtered = users.filter((user) => {
-      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-      return fullName.includes(filterName.toLowerCase());
+    const handleRequestSort = (event, property) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setPage(0);
+        setRowsPerPage(parseInt(event.target.value, 10));
+    };
+
+    const handleFilterByName = (event) => {
+        setPage(0);
+        setFilterName(event.target.value);
+    };
+
+    const handleRowClick = (user) => {
+        setSelectedUser(user);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+    };
+
+    const dataFiltered = applyFilter({
+        inputData: users,
+        comparator: getComparator(order, orderBy),
+        filterName,
     });
-    setFilteredUsers(filtered);
-    setPage(0);
-  }, [filterName, users]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+    const notFound = !dataFiltered.length && !!filterName;
 
-  const handleChangeRowsPerPage = (event) => {
-    setPage(0);
-    setRowsPerPage(parseInt(event.target.value, 10));
-  };
+    return (
+        <Container>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+                <Typography variant="h4">Users</Typography>
+            </Stack>
 
-  const handleRowClick = (user) => {
-    setSelectedUser(user);
-    setModalOpen(true);
-  };
+            <Card>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mx={2} my={2}>
+                    <TextField
+                        value={filterName}
+                        onChange={handleFilterByName}
+                        placeholder="Search user..."
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Stack>
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
+                <Scrollbar>
+                    <TableContainer sx={{ overflow: 'unset' }}>
+                        <Table sx={{ minWidth: 800 }}>
+                            <UserTableHead
+                                order={order}
+                                orderBy={orderBy}
+                                onRequestSort={handleRequestSort}
+                                headLabel={[
+                                    { id: 'firstName', label: 'Name' },
+                                    { id: 'company', label: 'Company' },
+                                    { id: 'role', label: 'Role' },
+                                    { id: 'phone', label: 'Phone' },
+                                    { id: 'address', label: 'Address' },
+                                ]}
+                            />
+                            <TableBody>
+                                {dataFiltered
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((row) => (
+                                        <UserTableRow
+                                            key={row.id}
+                                            name={`${row.firstName} ${row.lastName}`}
+                                            role={row.company.title}
+                                            company={row.company.name}
+                                            avatarUrl={row.image}
+                                            phone={row.phone}
+                                            address={row.address}
+                                            onRowClick={() => handleRowClick(row)}
+                                        />
+                                    ))}
 
-  const handleFilterByName = (event) => {
-    setFilterName(event.target.value);
-  };
+                                <TableEmptyRows
+                                    height={77}
+                                    emptyRows={emptyRows(page, rowsPerPage, dataFiltered.length)}
+                                />
 
-  return (
-    <Container>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <Typography variant="h4">Users</Typography>
-      </Stack>
+                                {notFound && <TableNoData query={filterName} />}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Scrollbar>
 
-      <Card>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mx={2} my={2}>
-          <TextField
-            value={filterName}
-            onChange={handleFilterByName}
-            placeholder="Search user..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Stack>
+                <TablePagination
+                    page={page}
+                    component="div"
+                    count={dataFiltered.length}
+                    rowsPerPage={rowsPerPage}
+                    onPageChange={handleChangePage}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+            </Card>
 
-        <Scrollbar>
-          <TableContainer sx={{ overflow: 'unset' }}>
-            <Table sx={{ minWidth: 800 }}>
-              <UserTableHead
-                headLabel={[
-                  { id: 'name', label: 'Name' },
-                  { id: 'company', label: 'Company' },
-                  { id: 'role', label: 'Role' },
-                  { id: 'phone', label: 'Phone' },
-                  { id: 'address', label: 'Address' },
-                ]}
-              />
-              <TableBody>
-                {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-                  <UserTableRow
-                    key={row.id}
-                    name={`${row.firstName} ${row.lastName}`}
-                    role={row.company.title}
-                    company={row.company.name}
-                    avatarUrl={row.image}
-                    phone={row.phone}
-                    address={row.address}
-                    onRowClick={() => handleRowClick(row)}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Scrollbar>
-
-        <TablePagination
-          page={page}
-          component="div"
-          count={filteredUsers.length}
-          rowsPerPage={rowsPerPage}
-          onPageChange={handleChangePage}
-          rowsPerPageOptions={[5, 10, 25]}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Card>
-
-      <UserDetailsModal
-        user={selectedUser}
-        open={modalOpen}
-        onClose={handleCloseModal}
-      />
-    </Container>
-  );
+            <UserDetailsModal
+                user={selectedUser}
+                open={modalOpen}
+                onClose={handleCloseModal}
+            />
+        </Container>
+    );
 }
 
 UserView.propTypes = {
-  users: PropTypes.array.isRequired,
+    users: PropTypes.array.isRequired,
 };

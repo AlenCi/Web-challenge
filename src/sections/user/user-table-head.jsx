@@ -1,20 +1,40 @@
 // src/sections/user/user-table-head.jsx
 import PropTypes from 'prop-types';
+import Box from '@mui/material/Box';
 import TableRow from '@mui/material/TableRow';
 import TableHead from '@mui/material/TableHead';
 import TableCell from '@mui/material/TableCell';
+import TableSortLabel from '@mui/material/TableSortLabel';
 
-export default function UserTableHead({ headLabel }) {
+import { visuallyHidden } from './utils';
+
+export default function UserTableHead({ order, orderBy, headLabel, onRequestSort }) {
+  const createSortHandler = (property) => (event) => {
+    onRequestSort(event, property);
+  };
+
   return (
     <TableHead>
       <TableRow>
         {headLabel.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={headCell.align || 'left'}
-            sx={{ width: headCell.width, minWidth: headCell.minWidth }}
+            align={headCell.alignRight ? 'right' : 'left'}
+            sortDirection={orderBy === headCell.id ? order : false}
           >
-            {headCell.label}
+            <TableSortLabel
+              hideSortIcon
+              active={orderBy === headCell.id}
+              direction={orderBy === headCell.id ? order : 'asc'}
+              onClick={createSortHandler(headCell.id)}
+            >
+              {headCell.label}
+              {orderBy === headCell.id ? (
+                <Box sx={{ ...visuallyHidden }}>
+                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                </Box>
+              ) : null}
+            </TableSortLabel>
           </TableCell>
         ))}
       </TableRow>
@@ -23,5 +43,8 @@ export default function UserTableHead({ headLabel }) {
 }
 
 UserTableHead.propTypes = {
+  order: PropTypes.oneOf(['asc', 'desc']),
+  orderBy: PropTypes.string,
   headLabel: PropTypes.array,
+  onRequestSort: PropTypes.func,
 };
