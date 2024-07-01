@@ -25,6 +25,7 @@ export default function UserTableRow({
   isVerified,
   status,
   handleClick,
+  onRowClick, // Add this line
 }) {
   const [open, setOpen] = useState(null);
 
@@ -38,7 +39,7 @@ export default function UserTableRow({
 
   return (
     <>
-      <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
+      <TableRow hover tabIndex={-1} role="checkbox" selected={selected} onClick={onRowClick}>
         <TableCell padding="checkbox">
           <Checkbox disableRipple checked={selected} onChange={handleClick} />
         </TableCell>
@@ -52,7 +53,7 @@ export default function UserTableRow({
           </Stack>
         </TableCell>
 
-        <TableCell>{company}</TableCell>
+        <TableCell>{company.name}</TableCell>
 
         <TableCell>{role}</TableCell>
 
@@ -95,11 +96,12 @@ export default function UserTableRow({
 
 UserTableRow.propTypes = {
   avatarUrl: PropTypes.any,
-  company: PropTypes.any,
+  company: PropTypes.object,
   handleClick: PropTypes.func,
   isVerified: PropTypes.any,
-  name: PropTypes.any,
+  name: PropTypes.string,
   role: PropTypes.any,
   selected: PropTypes.any,
   status: PropTypes.string,
+  onRowClick: PropTypes.func, // Add this line
 };
