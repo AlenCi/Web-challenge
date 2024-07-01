@@ -1,19 +1,88 @@
+// src/sections/products/product-card.jsx
 import PropTypes from 'prop-types';
-
+import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { useRef, useEffect } from 'react';
 
 import { fCurrency } from 'src/utils/format-number';
 
 import Label from 'src/components/label';
-import { ColorPreview } from 'src/components/color-utils';
 
 // ----------------------------------------------------------------------
 
-export default function ShopProductCard({ product }) {
+const StyledProductImg = styled('img')({
+  top: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  position: 'absolute',
+});
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  transition: 'transform 0.2s ease-out',
+  transformStyle: 'preserve-3d',
+  willChange: 'transform',
+
+  boxShadow: theme.shadows[2],
+  // Add some margin to ensure the shadow is always visible
+  margin: theme.spacing(1),
+}));
+
+// ----------------------------------------------------------------------
+
+export default function ShopProductCard({ product, onProductClick }) {
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    let bounds;
+
+    function rotateToMouse(e) {
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      const leftX = mouseX - bounds.x;
+      const topY = mouseY - bounds.y;
+      const center = {
+        x: leftX - bounds.width / 2,
+        y: topY - bounds.height / 2
+      }
+      const distance = Math.sqrt(center.x**2 + center.y**2);
+
+      card.style.transform = `
+        scale3d(1.07, 1.07, 1.07)
+    
+      `;
+  
+    }
+
+    function removeListener() {
+      card.style.transform = '';
+      card.style.boxShadow = '';
+    }
+
+    card.addEventListener('mouseenter', () => {
+      bounds = card.getBoundingClientRect();
+      document.addEventListener('mousemove', rotateToMouse);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      document.removeEventListener('mousemove', rotateToMouse);
+      removeListener();
+    });
+
+    return () => {
+      card.removeEventListener('mouseenter', () => {
+        document.addEventListener('mousemove', rotateToMouse);
+      });
+      card.removeEventListener('mouseleave', () => {
+        document.removeEventListener('mousemove', rotateToMouse);
+      });
+    }
+  }, []);
+
   const renderStatus = (
     <Label
       variant="filled"
@@ -30,60 +99,33 @@ export default function ShopProductCard({ product }) {
     </Label>
   );
 
-  const renderImg = (
-    <Box
-      component="img"
-      alt={product.name}
-      src={product.cover}
-      sx={{
-        top: 0,
-        width: 1,
-        height: 1,
-        objectFit: 'cover',
-        position: 'absolute',
-      }}
-    />
-  );
-
-  const renderPrice = (
-    <Typography variant="subtitle1">
-      <Typography
-        component="span"
-        variant="body1"
-        sx={{
-          color: 'text.disabled',
-          textDecoration: 'line-through',
-        }}
-      >
-        {product.priceSale && fCurrency(product.priceSale)}
-      </Typography>
-      &nbsp;
-      {fCurrency(product.price)}
-    </Typography>
-  );
-
   return (
-    <Card>
+    <StyledCard ref={cardRef} onClick={() => onProductClick(product)}>
       <Box sx={{ pt: '100%', position: 'relative' }}>
         {product.status && renderStatus}
 
-        {renderImg}
+        <StyledProductImg alt={product.title} src={product.thumbnail} />
       </Box>
 
       <Stack spacing={2} sx={{ p: 3 }}>
-        <Link color="inherit" underline="hover" variant="subtitle2" noWrap>
-          {product.name}
-        </Link>
+        <Typography variant="subtitle2" noWrap>
+          {product.title}
+        </Typography>
 
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <ColorPreview colors={product.colors} />
-          {renderPrice}
+          <Typography variant="subtitle1">
+            {product.category}
+          </Typography>
+          <Typography variant="subtitle1">
+            {fCurrency(product.price)}
+          </Typography>
         </Stack>
       </Stack>
-    </Card>
+    </StyledCard>
   );
 }
 
 ShopProductCard.propTypes = {
   product: PropTypes.object,
+  onProductClick: PropTypes.func,
 };
