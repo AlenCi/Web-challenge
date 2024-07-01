@@ -1,9 +1,10 @@
 {
-  "name": "@minimal/material-kit-react",
-  "author": "minimals.cc",
+  "name": "@alen/web-challenge",
+  "author": "Alen Cigler",
   "licence": "MIT",
-  "version": "1.8.0",
+  "version": "1.0.0",
   "private": false,
+  "homepage": "https://alenci.github.io/Web-challenge/",
   "scripts": {
     "dev": "vite",
     "start": "vite preview",

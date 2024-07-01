@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
 
   ],
-  base: "./",
+  base: process.env.NODE_ENV === 'production' ? '/Web-challenge/' : '/',
   resolve: {
     alias: [
       {
