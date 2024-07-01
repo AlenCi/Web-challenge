@@ -4,7 +4,7 @@ import axios from 'axios';
 const BASE_URL = 'https://dummyjson.com';
 
 export const fetchUsers = async (limit = 10, skip = 0) => {
-  const response = await axios.get(`${BASE_URL}/users?limit=${limit}&skip=${skip}`);
+  const response = await axios.get(`${BASE_URL}/users`);
   return response.data;
 };
 
@@ -32,10 +32,10 @@ export const searchProducts = async (query) => {
     const response = await axios.get(`${BASE_URL}/products/search?q=${query}`);
     return response.data;
   };
-// src/services/api.js
+
 export const fetchChartData = async () => {
-    const response = await axios.get(`${BASE_URL}/carts?limit=100`); // Fetch more carts for better data
+    const response = await axios.get(`${BASE_URL}/carts?limit=100`); 
     return response.data;
-  };
+};
 
   
