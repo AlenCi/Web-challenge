@@ -8,7 +8,17 @@ export const fetchUsers = async (limit = 10, skip = 0) => {
   return response.data;
 };
 
-export const fetchProducts = async (limit = 10, skip = 0) => {
+export const fetchAllProducts = async () => {
+    // Fetch the total count of products first
+    const countResponse = await axios.get(`${BASE_URL}/products`);
+    const totalProducts = countResponse.data.total;
+  
+    // Then fetch all products
+    const response = await axios.get(`${BASE_URL}/products?limit=${totalProducts}`);
+    return response.data;
+  };
+
+export const fetchProducts = async (limit = 20, skip = 0) => {
   const response = await axios.get(`${BASE_URL}/products?limit=${limit}&skip=${skip}`);
   return response.data;
 };
@@ -19,13 +29,13 @@ export const searchUsers = async (query) => {
 };
 
 export const searchProducts = async (query) => {
-  const response = await axios.get(`${BASE_URL}/products/search?q=${query}`);
-  return response.data;
-};
-
+    const response = await axios.get(`${BASE_URL}/products/search?q=${query}`);
+    return response.data;
+  };
 // src/services/api.js
 export const fetchChartData = async () => {
     const response = await axios.get(`${BASE_URL}/carts?limit=100`); // Fetch more carts for better data
     return response.data;
   };
-// Add more API functions as needed
+
+  
