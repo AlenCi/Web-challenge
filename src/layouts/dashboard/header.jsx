@@ -9,6 +9,8 @@ import Toolbar from '@mui/material/Toolbar';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import { googleLogout } from '@react-oauth/google';
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
 
 import { useAuth } from 'src/contexts/AuthContext';
 import { useResponsive } from 'src/hooks/use-responsive';
@@ -16,7 +18,6 @@ import { bgBlur } from 'src/theme/css';
 
 import Iconify from 'src/components/iconify';
 
-import Searchbar from './common/searchbar';
 import { NAV, HEADER } from './config-layout';
 
 export default function Header({ onOpenNav }) {
@@ -31,6 +32,14 @@ export default function Header({ onOpenNav }) {
     navigate('/login');
   };
 
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
   const renderContent = (
     <>
       {!lgUp && (
@@ -39,17 +48,17 @@ export default function Header({ onOpenNav }) {
         </IconButton>
       )}
 
-      <Searchbar />
-
       <Box sx={{ flexGrow: 1 }} />
 
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={2}>
         {user && (
           <>
-            <Box>
-              <img src={user.picture} alt="user" style={{ width: 32, height: 32, borderRadius: '50%' }} />
-            </Box>
-            <Box>{user.name}</Box>
+            <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+              {getInitials(user.name)}
+            </Avatar>
+            <Typography variant="subtitle1" sx={{ color: 'text.primary' }}>
+              {user.name}
+            </Typography>
             <IconButton onClick={handleLogout}>
               <Iconify icon="eva:log-out-fill" />
             </IconButton>
