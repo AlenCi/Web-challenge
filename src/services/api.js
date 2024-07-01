@@ -23,4 +23,9 @@ export const searchProducts = async (query) => {
   return response.data;
 };
 
+// src/services/api.js
+export const fetchChartData = async () => {
+    const response = await axios.get(`${BASE_URL}/carts?limit=100`); // Fetch more carts for better data
+    return response.data;
+  };
 // Add more API functions as needed
