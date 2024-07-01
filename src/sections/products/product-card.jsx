@@ -25,6 +25,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   transition: 'transform 0.2s ease-out',
   transformStyle: 'preserve-3d',
   willChange: 'transform',
+  cursor: 'pointer',
 
   boxShadow: theme.shadows[2],
   // Add some margin to ensure the shadow is always visible
