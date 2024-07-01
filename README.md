@@ -43,4 +43,6 @@ Distributed under the MIT License. See [LICENSE](https://github.com/minimal-ui-k
 
 ## Contact us
 
-Email: support@minimals.cc
+Web challenge built in 8 days. Uses React framework, Vite. Material-UI template.
+
+Implements a users page, where the admin can see all the users. Clicking on a user shows a modal window with details
