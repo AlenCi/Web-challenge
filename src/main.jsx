@@ -11,7 +11,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <HelmetProvider>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense>
         <GoogleOAuthProvider clientId="948990571448-av1dnjgs45j7puuf62re3om3mbe9cfpf.apps.googleusercontent.com">
           <App />

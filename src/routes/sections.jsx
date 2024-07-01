@@ -17,6 +17,7 @@ export default function Router() {
 
   const routes = useRoutes([
     {
+      path: '/',
       element: user ? (
         <DashboardLayout>
           <Suspense>
