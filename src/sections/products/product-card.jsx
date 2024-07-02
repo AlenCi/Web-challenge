@@ -54,7 +54,7 @@ export default function ShopProductCard({ product, onProductClick }) {
       const distance = Math.sqrt(center.x**2 + center.y**2);
 
       card.style.transform = `
-        scale3d(1.07, 1.07, 1.07)
+        scale3d(1.03, 1.03, 1.03)
       `;
     }
 
