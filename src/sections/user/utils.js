@@ -18,17 +18,17 @@ function descendingComparator(a, b, orderBy) {
     let aValue, bValue;
 
     switch (orderBy) {
-        case 'company':
-            aValue = a.company.name;
-            bValue = b.company.name;
+        case 'email':
+            aValue = a.email;
+            bValue = b.email;
             break;
         case 'address':
             aValue = `${a.address.address}, ${a.address.city}`;
             bValue = `${b.address.address}, ${b.address.city}`;
             break;
-        case 'role':
-            aValue = a.company.title;
-            bValue = b.company.title;
+        case 'age':
+            aValue = new Date().getFullYear() - new Date(a.birthDate).getFullYear();
+            bValue = new Date().getFullYear() - new Date(b.birthDate).getFullYear();
             break;
         default:
             aValue = a[orderBy];
@@ -63,12 +63,12 @@ export function applyFilter({ inputData, comparator, filterName }) {
 
     if (filterName) {
         inputData = inputData.filter(
-            (user) =>
-                `${user.firstName} ${user.lastName}`.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
-                user.company.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
-                `${user.address.address}, ${user.address.city}`.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+          (user) =>
+            `${user.firstName} ${user.lastName}`.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+            user.email.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+            `${user.address.address}, ${user.address.city}`.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
         );
-    }
+      }
 
     return inputData;
 }

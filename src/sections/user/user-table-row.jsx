@@ -9,8 +9,8 @@ import Avatar from '@mui/material/Avatar';
 export default function UserTableRow({
   name,
   avatarUrl,
-  company,
-  role,
+  email,
+  age,
   phone,
   address,
   onRowClick,
@@ -26,9 +26,9 @@ export default function UserTableRow({
         </Stack>
       </TableCell>
 
-      <TableCell>{company}</TableCell>
+      <TableCell>{email}</TableCell>
 
-      <TableCell>{role}</TableCell>
+      <TableCell>{age}</TableCell>
 
       <TableCell>{phone}</TableCell>
 
@@ -39,10 +39,10 @@ export default function UserTableRow({
 
 UserTableRow.propTypes = {
   avatarUrl: PropTypes.string,
-  company: PropTypes.string,
+  email: PropTypes.string,
   name: PropTypes.string,
   onRowClick: PropTypes.func,
-  role: PropTypes.string,
+  age: PropTypes.number,
   phone: PropTypes.string,
   address: PropTypes.object,
 };

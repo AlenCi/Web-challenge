@@ -24,11 +24,12 @@ import { emptyRows, applyFilter, getComparator } from '../utils';
 export default function UserView({ users }) {
     const [page, setPage] = useState(0);
     const [order, setOrder] = useState('asc');
-    const [orderBy, setOrderBy] = useState('firstName');
+    const [orderBy, setOrderBy] = useState('age');
     const [filterName, setFilterName] = useState('');
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [selectedUser, setSelectedUser] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -98,8 +99,8 @@ export default function UserView({ users }) {
                                 onRequestSort={handleRequestSort}
                                 headLabel={[
                                     { id: 'firstName', label: 'Name' },
-                                    { id: 'company', label: 'Company' },
-                                    { id: 'role', label: 'Role' },
+                                    { id: 'email', label: 'Email' },
+                                    { id: 'age', label: 'Age' },
                                     { id: 'phone', label: 'Phone' },
                                     { id: 'address', label: 'Address' },
                                 ]}
@@ -107,18 +108,22 @@ export default function UserView({ users }) {
                             <TableBody>
                                 {dataFiltered
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                    .map((row) => (
-                                        <UserTableRow
-                                            key={row.id}
-                                            name={`${row.firstName} ${row.lastName}`}
-                                            role={row.company.title}
-                                            company={row.company.name}
-                                            avatarUrl={row.image}
-                                            phone={row.phone}
-                                            address={row.address}
-                                            onRowClick={() => handleRowClick(row)}
-                                        />
-                                    ))}
+                                    .map((row) => {
+                                        const birthDate = new Date(row.birthDate);
+                                        const age = new Date().getFullYear() - birthDate.getFullYear();
+                                        return (
+                                            <UserTableRow
+                                                key={row.id}
+                                                name={`${row.firstName} ${row.lastName}`}
+                                                email={row.email}
+                                                age={age}
+                                                avatarUrl={row.image}
+                                                phone={row.phone}
+                                                address={row.address}
+                                                onRowClick={() => handleRowClick(row)}
+                                            />
+                                        );
+                                    })}
 
                                 <TableEmptyRows
                                     height={77}
