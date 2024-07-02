@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 
 import { ChartsView } from 'src/sections/charts/view';
 
-// Import the API function (we'll create this next)
 import { fetchChartData } from 'src/services/api';
 
 export default function ChartsPage() {
