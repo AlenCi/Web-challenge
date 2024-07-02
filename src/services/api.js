@@ -19,6 +19,7 @@ export const fetchAllProducts = async () => {
   };
 
 export const fetchProducts = async (limit = 20, skip = 0) => {
+   
   const response = await axios.get(`${BASE_URL}/products?limit=${limit}&skip=${skip}`);
   return response.data;
 };

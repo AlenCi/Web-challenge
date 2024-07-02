@@ -34,21 +34,32 @@ export default function ProductsView({ initialProducts }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const loadMoreProducts = useCallback(async () => {
+    console.log('loadMoreProducts called. Current page:', page);
     if (sortOrder || searchQuery) return; // Don't load more if sorting or searching
-
+  
     const nextPage = page + 1;
+    console.log('Fetching products for page:', nextPage);
     const newProducts = await fetchProducts(PRODUCTS_PER_PAGE, (nextPage - 1) * PRODUCTS_PER_PAGE);
     
+    console.log('Fetched products:', newProducts.products.length);
     if (newProducts.products.length === 0) {
       setHasMore(false);
     } else {
-      setProducts(prevProducts => [...prevProducts, ...newProducts.products]);
-      setDisplayedProducts(prevDisplayed => [...prevDisplayed, ...newProducts.products]);
+      setProducts(prevProducts => {
+        console.log('Previous products count:', prevProducts.length);
+        return [...prevProducts, ...newProducts.products];
+      });
+      setDisplayedProducts(prevDisplayed => {
+        console.log('Previous displayed products count:', prevDisplayed.length);
+        return [...prevDisplayed, ...newProducts.products];
+      });
       setPage(nextPage);
+      console.log('Page set to:', nextPage);
     }
   }, [page, sortOrder, searchQuery]);
 
   useEffect(() => {
+    console.log('useEffect triggered. Current page:', page);
     if (searchQuery) {
       const fetchSearchResults = async () => {
         setIsLoading(true);
@@ -56,12 +67,13 @@ export default function ProductsView({ initialProducts }) {
         setDisplayedProducts(searchResults.products);
         setHasMore(false);
         setIsLoading(false);
+        setPage(1);  // Only reset page for new searches
+        console.log('Page reset to 1 for new search');
       };
       fetchSearchResults();
     } else if (!sortOrder) {
       setDisplayedProducts(products);
       setHasMore(true);
-      setPage(1);
     }
   }, [searchQuery, products, sortOrder]);
 
