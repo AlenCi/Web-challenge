@@ -10,6 +10,7 @@ import { useRef, useEffect } from 'react';
 import { fCurrency } from 'src/utils/format-number';
 
 import Label from 'src/components/label';
+import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
@@ -21,21 +22,21 @@ const StyledProductImg = styled('img')({
   position: 'absolute',
 });
 
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Card)(({ theme, lowstock }) => ({
   transition: 'transform 0.2s ease-out',
   transformStyle: 'preserve-3d',
   willChange: 'transform',
   cursor: 'pointer',
-
   boxShadow: theme.shadows[2],
-  // Add some margin to ensure the shadow is always visible
   margin: theme.spacing(1),
+  border: lowstock === 'true' ? `2px solid ${theme.palette.error.main}` : 'none',
 }));
 
 // ----------------------------------------------------------------------
 
 export default function ShopProductCard({ product, onProductClick }) {
   const cardRef = useRef(null);
+  const isLowStock = product.stock < 10;
 
   useEffect(() => {
     const card = cardRef.current;
@@ -54,9 +55,7 @@ export default function ShopProductCard({ product, onProductClick }) {
 
       card.style.transform = `
         scale3d(1.07, 1.07, 1.07)
-    
       `;
-  
     }
 
     function removeListener() {
@@ -101,7 +100,7 @@ export default function ShopProductCard({ product, onProductClick }) {
   );
 
   return (
-    <StyledCard ref={cardRef} onClick={() => onProductClick(product)}>
+    <StyledCard ref={cardRef} onClick={() => onProductClick(product)} lowstock={isLowStock.toString()}>
       <Box sx={{ pt: '100%', position: 'relative' }}>
         {product.status && renderStatus}
 
@@ -114,9 +113,17 @@ export default function ShopProductCard({ product, onProductClick }) {
         </Typography>
 
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="subtitle1">
-            {product.category}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            {isLowStock && (
+              <Iconify icon="mdi:alert-circle" color="error.main" width={20} height={20} />
+            )}
+            <Typography 
+              variant="subtitle1"
+              color={isLowStock ? 'error.main' : 'text.primary'}
+            >
+              Stock: {product.stock}
+            </Typography>
+          </Stack>
           <Typography variant="subtitle1">
             {fCurrency(product.price)}
           </Typography>
