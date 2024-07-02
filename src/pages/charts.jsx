@@ -4,25 +4,30 @@ import { useState, useEffect } from 'react';
 
 import { ChartsView } from 'src/sections/charts/view';
 
-import { fetchChartData } from 'src/services/api';
+import { fetchChartData, fetchAllProducts } from 'src/services/api';
 
 export default function ChartsPage() {
   const [chartData, setChartData] = useState(null);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getChartData = async () => {
+    const fetchData = async () => {
       try {
-        const data = await fetchChartData();
-        setChartData(data);
+        const [chartDataResponse, productsResponse] = await Promise.all([
+          fetchChartData(),
+          fetchAllProducts()
+        ]);
+        setChartData(chartDataResponse);
+        setProducts(productsResponse.products);
       } catch (error) {
-        console.error('Error fetching chart data:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    getChartData();
+    fetchData();
   }, []);
 
   return (
@@ -31,7 +36,7 @@ export default function ChartsPage() {
         <title> Charts | Minimal UI </title>
       </Helmet>
 
-      <ChartsView chartData={chartData} loading={loading} />
+      <ChartsView chartData={chartData} loading={loading} products={products}/>
     </>
   );
 }
