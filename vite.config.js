@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
 
   ],
-  base: process.env.NODE_ENV === 'production' ? '/Web-challenge/' : '/',
+  base: process.env.DOCKER ? '/' : '/Web-challenge/',
   resolve: {
     alias: [
       {
