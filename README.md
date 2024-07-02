@@ -13,3 +13,5 @@ Running without Docker:
 1. npm install
 2. npm run dev
 3. visit [localhost:3000](http://localhost:3000)
+
+Also has a Github Pages deployment [here](https://alenci.github.io/Web-challenge/).
