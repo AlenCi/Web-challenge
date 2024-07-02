@@ -18,11 +18,13 @@ export const fetchAllProducts = async () => {
     return response.data;
   };
 
-export const fetchProducts = async (limit = 20, skip = 0) => {
-   
-  const response = await axios.get(`${BASE_URL}/products?limit=${limit}&skip=${skip}`);
-  return response.data;
-};
+  export const fetchProducts = async (limit = 20, skip = 0, category = '') => {
+    const url = category
+      ? `${BASE_URL}/products/category/${category}?limit=${limit}&skip=${skip}`
+      : `${BASE_URL}/products?limit=${limit}&skip=${skip}`;
+    const response = await axios.get(url);
+    return response.data;
+  };
 
 export const searchUsers = async (query) => {
   const response = await axios.get(`${BASE_URL}/users/search?q=${query}`);

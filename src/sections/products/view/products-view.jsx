@@ -12,7 +12,10 @@ import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import CircularProgress from '@mui/material/CircularProgress';
-
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
 import Iconify from 'src/components/iconify';
 
 import ProductCard from '../product-card';
@@ -22,168 +25,236 @@ import { searchProducts, fetchProducts, fetchAllProducts } from 'src/services/ap
 const PRODUCTS_PER_PAGE = 20;
 
 export default function ProductsView({ initialProducts }) {
-  const [products, setProducts] = useState(initialProducts);
-  const [allProducts, setAllProducts] = useState([]);
-  const [displayedProducts, setDisplayedProducts] = useState(initialProducts);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [sortOrder, setSortOrder] = useState('');
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+    const [products, setProducts] = useState(initialProducts);
+    const [allProducts, setAllProducts] = useState([]);
+    const [displayedProducts, setDisplayedProducts] = useState(initialProducts);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [sortOrder, setSortOrder] = useState('');
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const handleFilterClick = (event) => {
+        setFilterAnchorEl(event.currentTarget);
+    };
 
-  const loadMoreProducts = useCallback(async () => {
-    console.log('loadMoreProducts called. Current page:', page);
-    if (sortOrder || searchQuery) return; // Don't load more if sorting or searching
-  
-    const nextPage = page + 1;
-    console.log('Fetching products for page:', nextPage);
-    const newProducts = await fetchProducts(PRODUCTS_PER_PAGE, (nextPage - 1) * PRODUCTS_PER_PAGE);
-    
-    console.log('Fetched products:', newProducts.products.length);
-    if (newProducts.products.length === 0) {
-      setHasMore(false);
-    } else {
-      setProducts(prevProducts => {
-        console.log('Previous products count:', prevProducts.length);
-        return [...prevProducts, ...newProducts.products];
-      });
-      setDisplayedProducts(prevDisplayed => {
-        console.log('Previous displayed products count:', prevDisplayed.length);
-        return [...prevDisplayed, ...newProducts.products];
-      });
-      setPage(nextPage);
-      console.log('Page set to:', nextPage);
-    }
-  }, [page, sortOrder, searchQuery]);
-
-  useEffect(() => {
-    console.log('useEffect triggered. Current page:', page);
-    if (searchQuery) {
-      const fetchSearchResults = async () => {
-        setIsLoading(true);
-        const searchResults = await searchProducts(searchQuery);
-        setDisplayedProducts(searchResults.products);
-        setHasMore(false);
-        setIsLoading(false);
-        setPage(1);  // Only reset page for new searches
-        console.log('Page reset to 1 for new search');
-      };
-      fetchSearchResults();
-    } else if (!sortOrder) {
-      setDisplayedProducts(products);
-      setHasMore(true);
-    }
-  }, [searchQuery, products, sortOrder]);
-
-  useEffect(() => {
-    if (sortOrder) {
-      const fetchAndSortAllProducts = async () => {
-        setIsLoading(true);
-        if (allProducts.length === 0) {
-          const allProductsData = await fetchAllProducts();
-          setAllProducts(allProductsData.products);
-        }
-        
-        const sortedProducts = [...allProducts].sort((a, b) => {
-          if (sortOrder === 'asc') {
-            return a.price - b.price;
+    const handleFilterClose = () => {
+        setFilterAnchorEl(null);
+    };
+    const extractCategories = useCallback((products) => {
+        const uniqueCategories = [...new Set(products.map(product => product.category))];
+        setCategories(uniqueCategories);
+    }, []);
+    const handleCategoryToggle = (category) => {
+        setSelectedCategories((prev) => {
+          if (prev.includes(category)) {
+            return prev.filter(c => c !== category);
           } else {
-            return b.price - a.price;
+            return [...prev, category];
           }
         });
-        
-        setDisplayedProducts(sortedProducts);
-        setHasMore(false);
-        setIsLoading(false);
       };
+      useEffect(() => {
+        const fetchInitialData = async () => {
+          setIsLoading(true);
+          const allProductsData = await fetchAllProducts();
+          setAllProducts(allProductsData.products);
+          setProducts(allProductsData.products);
+          setDisplayedProducts(allProductsData.products);
+          extractCategories(allProductsData.products);
+          setIsLoading(false);
+        };
       
-      fetchAndSortAllProducts();
-    }
-  }, [sortOrder, allProducts]);
+        fetchInitialData();
+      }, []);
+      const loadMoreProducts = useCallback(async () => {
+        if (sortOrder || searchQuery || selectedCategories.length > 0) return; // Don't load more if sorting, searching, or filtering
+      
+        const nextPage = page + 1;
+        const newProducts = await fetchProducts(PRODUCTS_PER_PAGE, (nextPage - 1) * PRODUCTS_PER_PAGE);
+        
+        if (newProducts.products.length === 0) {
+          setHasMore(false);
+        } else {
+          setProducts(prevProducts => [...prevProducts, ...newProducts.products]);
+          setDisplayedProducts(prevDisplayed => [...prevDisplayed, ...newProducts.products]);
+          setPage(nextPage);
+        }
+      }, [page, sortOrder, searchQuery, selectedCategories]);
 
-  const handleProductClick = (product) => {
-    setSelectedProduct(product);
-    setModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
-
-  return (
-    <Container>
-      <Typography variant="h4" sx={{ mb: 5 }}>
-        Products
-      </Typography>
-
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <TextField
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search products..."
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          displayEmpty
-          inputProps={{ 'aria-label': 'Sort by price' }}
-        >
-          <MenuItem value="">
-            <em>Sort by Price</em>
-          </MenuItem>
-          <MenuItem value="asc">Price: Low to High</MenuItem>
-          <MenuItem value="desc">Price: High to Low</MenuItem>
-        </Select>
-      </Stack>
-
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <CircularProgress />
-        </div>
-      ) : (
-        <InfiniteScroll
-          dataLength={displayedProducts.length}
-          next={loadMoreProducts}
-          hasMore={hasMore}
-          loader={
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <CircularProgress />
-            </div>
+      useEffect(() => {
+        const performSearch = async () => {
+          setIsLoading(true);
+          let searchResults;
+          if (searchQuery) {
+            searchResults = await searchProducts(searchQuery);
+            searchResults = searchResults.products;
+          } else {
+            searchResults = [...allProducts];
           }
-          endMessage={
-            <Typography variant="body2" sx={{ textAlign: 'center', padding: '20px' }}>
-              No more products to load.
+      
+          // Apply category filter
+          if (selectedCategories.length > 0) {
+            searchResults = searchResults.filter(product => 
+              selectedCategories.includes(product.category)
+            );
+          }
+      
+          // Apply sorting
+          if (sortOrder) {
+            searchResults.sort((a, b) => {
+              if (sortOrder === 'asc') {
+                return a.price - b.price;
+              } else {
+                return b.price - a.price;
+              }
+            });
+          }
+      
+          setDisplayedProducts(searchResults);
+          setIsLoading(false);
+          setHasMore(false);
+          setPage(1);
+        };
+      
+        performSearch();
+      }, [searchQuery, selectedCategories, sortOrder, allProducts]);
+    useEffect(() => {
+        const applySortAndFilter = async () => {
+          setIsLoading(true);
+          let productsToSort = [...(searchQuery ? displayedProducts : allProducts)];
+          
+          // Apply category filter
+          if (selectedCategories.length > 0) {
+            productsToSort = productsToSort.filter(product => 
+              selectedCategories.includes(product.category)
+            );
+          }
+      
+          // Apply sorting
+          if (sortOrder) {
+            productsToSort.sort((a, b) => {
+              if (sortOrder === 'asc') {
+                return a.price - b.price;
+              } else {
+                return b.price - a.price;
+              }
+            });
+          }
+      
+          setDisplayedProducts(productsToSort);
+          setIsLoading(false);
+        };
+      
+        applySortAndFilter();
+      }, [sortOrder, selectedCategories, allProducts, searchQuery]);
+    const handleProductClick = (product) => {
+        setSelectedProduct(product);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+    };
+
+    return (
+        <Container>
+            <Typography variant="h4" sx={{ mb: 5 }}>
+                Products
             </Typography>
-          }
-        >
-          <Grid container spacing={3}>
-            {displayedProducts.map((product) => (
-              <Grid key={product.id} xs={12} sm={6} md={3}>
-                <ProductCard product={product} onProductClick={() => handleProductClick(product)} />
-              </Grid>
-            ))}
-          </Grid>
-        </InfiniteScroll>
-      )}
 
-      <ProductDetailsModal
-        product={selectedProduct}
-        open={modalOpen}
-        onClose={handleCloseModal}
-      />
-    </Container>
-  );
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+                <TextField
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products..."
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+                <Stack direction="row" spacing={2}>
+<Button
+  variant="outlined"
+  onClick={handleFilterClick}
+  endIcon={<Iconify icon="eva:funnel-fill" />}
+  color={selectedCategories.length > 0 ? "primary" : "inherit"}
+>
+  Filter {selectedCategories.length > 0 && `(${selectedCategories.length})`}
+</Button>
+                    <Select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                        displayEmpty
+                        inputProps={{ 'aria-label': 'Sort by price' }}
+                    >
+                        <MenuItem value="">
+                            <em>Sort by Price</em>
+                        </MenuItem>
+                        <MenuItem value="asc">Price: Low to High</MenuItem>
+                        <MenuItem value="desc">Price: High to Low</MenuItem>
+                    </Select>
+                </Stack>
+            </Stack>
+
+            <Menu
+                anchorEl={filterAnchorEl}
+                open={Boolean(filterAnchorEl)}
+                onClose={handleFilterClose}
+            >
+                {categories.map((category) => (
+                    <MenuItem key={category} onClick={() => handleCategoryToggle(category)}>
+                        <Checkbox checked={selectedCategories.includes(category)} />
+                        <ListItemText primary={category} />
+                    </MenuItem>
+                ))}
+            </Menu>
+            {isLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                </div>
+            ) : (
+                <InfiniteScroll
+                    dataLength={displayedProducts.length}
+                    next={loadMoreProducts}
+                    hasMore={hasMore}
+                    loader={
+                        <div style={{ textAlign: 'center', padding: '20px' }}>
+                            <CircularProgress />
+                        </div>
+                    }
+                    endMessage={
+                        <Typography variant="body2" sx={{ textAlign: 'center', padding: '20px' }}>
+                            No more products to load.
+                        </Typography>
+                    }
+                >
+                    <Grid container spacing={3}>
+                        {displayedProducts.map((product) => (
+                            <Grid key={product.id} xs={12} sm={6} md={3}>
+                                <ProductCard product={product} onProductClick={() => handleProductClick(product)} />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </InfiniteScroll>
+            )}
+
+            <ProductDetailsModal
+                product={selectedProduct}
+                open={modalOpen}
+                onClose={handleCloseModal}
+            />
+        </Container>
+    );
 }
 
 ProductsView.propTypes = {
-  initialProducts: PropTypes.array.isRequired,
+    initialProducts: PropTypes.array.isRequired,
 };
