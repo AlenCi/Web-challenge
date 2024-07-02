@@ -33,6 +33,14 @@ export default function UserDetailsModal({ user, open, onClose }) {
         <Typography variant="body2">{user.company.title}</Typography>
         <Typography variant="subtitle1" mt={2}>Address</Typography>
         <Typography variant="body2">{`${user.address.address}, ${user.address.city}, ${user.address.state} ${user.address.postalCode}`}</Typography>
+        <Typography variant="subtitle1" mt={2}>Username</Typography>
+        <Typography variant="body2">{user.username}</Typography>
+        <Typography variant="subtitle1" mt={2}>Date of Birth</Typography>
+        <Typography variant="body2">{user.birthDate}</Typography>
+        <Typography variant="subtitle1" mt={2}>Age</Typography>
+        <Typography variant="body2">{user.age}</Typography>
+        <Typography variant="subtitle1" mt={2}>Gender</Typography>
+        <Typography variant="body2">{user.gender}</Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
