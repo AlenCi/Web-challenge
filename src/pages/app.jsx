@@ -27,25 +27,31 @@ export default function AppPage() {
             <ListItem>
               <ListItemText 
                 primary="User Page" 
-                secondary="Displays user data in a table, with modal for detailed user information"
+                secondary="Displays user data in a table, with modal for detailed user information. Users can be clicked to display details in a modal, sorted by different categories, and searched for."
               />
             </ListItem>
             <ListItem>
               <ListItemText 
                 primary="Charts Page" 
-                secondary="Visualizes data using ApexCharts, showing product sales and cart size distribution"
+                secondary="Visualizes data using ApexCharts, showing product sales and cart size distribution. Also includes a pie chart for gender distribution, and you can click on the product chart to bring up the product detail modal. Products can be searched to show in how many carts they are."
               />
             </ListItem>
             <ListItem>
               <ListItemText 
                 primary="Products Page" 
-                secondary="Implements infinite scrolling, search functionality, and sorting options"
+                secondary="Implements search functionality, category filters, highlights when low on stock, modal for details, and sorting by price."
               />
             </ListItem>
             <ListItem>
               <ListItemText 
                 primary="Authentication" 
-                secondary="Implemented Google Sign-In for user authentication"
+                secondary="Implemented Google Sign-In for user authentication and sign-out."
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText 
+                primary="Deployment" 
+                secondary="Dockerized the app and deployed to GitHub Pages."
               />
             </ListItem>
           </List>

@@ -51,107 +51,107 @@ export default function ProductsView({ initialProducts }) {
     }, []);
     const handleCategoryToggle = (category) => {
         setSelectedCategories((prev) => {
-          if (prev.includes(category)) {
-            return prev.filter(c => c !== category);
-          } else {
-            return [...prev, category];
-          }
+            if (prev.includes(category)) {
+                return prev.filter(c => c !== category);
+            } else {
+                return [...prev, category];
+            }
         });
-      };
-      useEffect(() => {
+    };
+    useEffect(() => {
         const fetchInitialData = async () => {
-          setIsLoading(true);
-          const allProductsData = await fetchAllProducts();
-          setAllProducts(allProductsData.products);
-          setProducts(allProductsData.products);
-          setDisplayedProducts(allProductsData.products);
-          extractCategories(allProductsData.products);
-          setIsLoading(false);
+            setIsLoading(true);
+            const allProductsData = await fetchAllProducts();
+            setAllProducts(allProductsData.products);
+            setProducts(allProductsData.products);
+            setDisplayedProducts(allProductsData.products);
+            extractCategories(allProductsData.products);
+            setIsLoading(false);
         };
-      
+
         fetchInitialData();
-      }, []);
-      const loadMoreProducts = useCallback(async () => {
+    }, []);
+    const loadMoreProducts = useCallback(async () => {
         if (sortOrder || searchQuery || selectedCategories.length > 0) return; // Don't load more if sorting, searching, or filtering
-      
+
         const nextPage = page + 1;
         const newProducts = await fetchProducts(PRODUCTS_PER_PAGE, (nextPage - 1) * PRODUCTS_PER_PAGE);
-        
-        if (newProducts.products.length === 0) {
-          setHasMore(false);
-        } else {
-          setProducts(prevProducts => [...prevProducts, ...newProducts.products]);
-          setDisplayedProducts(prevDisplayed => [...prevDisplayed, ...newProducts.products]);
-          setPage(nextPage);
-        }
-      }, [page, sortOrder, searchQuery, selectedCategories]);
 
-      useEffect(() => {
+        if (newProducts.products.length === 0) {
+            setHasMore(false);
+        } else {
+            setProducts(prevProducts => [...prevProducts, ...newProducts.products]);
+            setDisplayedProducts(prevDisplayed => [...prevDisplayed, ...newProducts.products]);
+            setPage(nextPage);
+        }
+    }, [page, sortOrder, searchQuery, selectedCategories]);
+
+    useEffect(() => {
         const performSearch = async () => {
-          setIsLoading(true);
-          let searchResults;
-          if (searchQuery) {
-            searchResults = await searchProducts(searchQuery);
-            searchResults = searchResults.products;
-          } else {
-            searchResults = [...allProducts];
-          }
-      
-          // Apply category filter
-          if (selectedCategories.length > 0) {
-            searchResults = searchResults.filter(product => 
-              selectedCategories.includes(product.category)
-            );
-          }
-      
-          // Apply sorting
-          if (sortOrder) {
-            searchResults.sort((a, b) => {
-              if (sortOrder === 'asc') {
-                return a.price - b.price;
-              } else {
-                return b.price - a.price;
-              }
-            });
-          }
-      
-          setDisplayedProducts(searchResults);
-          setIsLoading(false);
-          setHasMore(false);
-          setPage(1);
+            setIsLoading(true);
+            let searchResults;
+            if (searchQuery) {
+                searchResults = await searchProducts(searchQuery);
+                searchResults = searchResults.products;
+            } else {
+                searchResults = [...allProducts];
+            }
+
+            // Apply category filter
+            if (selectedCategories.length > 0) {
+                searchResults = searchResults.filter(product =>
+                    selectedCategories.includes(product.category)
+                );
+            }
+
+            // Apply sorting
+            if (sortOrder) {
+                searchResults.sort((a, b) => {
+                    if (sortOrder === 'asc') {
+                        return a.price - b.price;
+                    } else {
+                        return b.price - a.price;
+                    }
+                });
+            }
+
+            setDisplayedProducts(searchResults);
+            setIsLoading(false);
+            setHasMore(false);
+            setPage(1);
         };
-      
+
         performSearch();
-      }, [searchQuery, selectedCategories, sortOrder, allProducts]);
+    }, [searchQuery, selectedCategories, sortOrder, allProducts]);
     useEffect(() => {
         const applySortAndFilter = async () => {
-          setIsLoading(true);
-          let productsToSort = [...(searchQuery ? displayedProducts : allProducts)];
-          
-          // Apply category filter
-          if (selectedCategories.length > 0) {
-            productsToSort = productsToSort.filter(product => 
-              selectedCategories.includes(product.category)
-            );
-          }
-      
-          // Apply sorting
-          if (sortOrder) {
-            productsToSort.sort((a, b) => {
-              if (sortOrder === 'asc') {
-                return a.price - b.price;
-              } else {
-                return b.price - a.price;
-              }
-            });
-          }
-      
-          setDisplayedProducts(productsToSort);
-          setIsLoading(false);
+            setIsLoading(true);
+            let productsToSort = [...(searchQuery ? displayedProducts : allProducts)];
+
+            // Apply category filter
+            if (selectedCategories.length > 0) {
+                productsToSort = productsToSort.filter(product =>
+                    selectedCategories.includes(product.category)
+                );
+            }
+
+            // Apply sorting
+            if (sortOrder) {
+                productsToSort.sort((a, b) => {
+                    if (sortOrder === 'asc') {
+                        return a.price - b.price;
+                    } else {
+                        return b.price - a.price;
+                    }
+                });
+            }
+
+            setDisplayedProducts(productsToSort);
+            setIsLoading(false);
         };
-      
+
         applySortAndFilter();
-      }, [sortOrder, selectedCategories, allProducts, searchQuery]);
+    }, [sortOrder, selectedCategories, allProducts, searchQuery]);
     const handleProductClick = (product) => {
         setSelectedProduct(product);
         setModalOpen(true);
@@ -181,14 +181,14 @@ export default function ProductsView({ initialProducts }) {
                     }}
                 />
                 <Stack direction="row" spacing={2}>
-<Button
-  variant="outlined"
-  onClick={handleFilterClick}
-  endIcon={<Iconify icon="eva:funnel-fill" />}
-  color={selectedCategories.length > 0 ? "primary" : "inherit"}
->
-  Filter {selectedCategories.length > 0 && `(${selectedCategories.length})`}
-</Button>
+                    <Button
+                        variant="outlined"
+                        onClick={handleFilterClick}
+                        endIcon={<Iconify icon="eva:funnel-fill" />}
+                        color={selectedCategories.length > 0 ? "primary" : "inherit"}
+                    >
+                        Filter {selectedCategories.length > 0 && `(${selectedCategories.length})`}
+                    </Button>
                     <Select
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value)}
