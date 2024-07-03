@@ -69,20 +69,26 @@ export const deleteUser = async (userId) => {
 };
 
 // PRODUCTS API
-export const fetchProducts = async (limit = 30, skip = 0) => {
-  const response = await axios.get(`${BASE_URL}/products`, { params: { limit, skip } });
-  return response.data;
+export const fetchProducts = async (limit = 30, skip = 0, sortOrder = '') => {
+    const sortParam = sortOrder ? `&sortBy=price&order=${sortOrder}` : '';
+    const response = await axios.get(`${BASE_URL}/products?limit=${limit}&skip=${skip}${sortParam}`);
+    return response.data;
 };
+
+
+
 
 export const getSingleProduct = async (productId) => {
   const response = await axios.get(`${BASE_URL}/products/${productId}`);
   return response.data;
 };
 
-export const searchProducts = async (query) => {
-  const response = await axios.get(`${BASE_URL}/products/search?q=${query}`);
-  return response.data;
+export const searchProducts = async (query, limit = 30, skip = 0, sortOrder = '') => {
+    const sortParam = sortOrder ? `&sortBy=price&order=${sortOrder}` : '';
+    const response = await axios.get(`${BASE_URL}/products/search?q=${query}&limit=${limit}&skip=${skip}${sortParam}`);
+    return response.data;
 };
+
 
 export const getProductCategories = async () => {
   const response = await axios.get(`${BASE_URL}/products/categories`);
@@ -90,11 +96,37 @@ export const getProductCategories = async () => {
   return response.data;
 };
 
-export const getProductsByCategory = async (category) => {
-  const response = await axios.get(`${BASE_URL}/products/category/${category}`);
-  return response.data;
+export const getProductsByCategories = async (categories, limit = 30, skip = 0, sortOrder = '') => {
+    // Fetch all products for all categories
+    const sortParam = sortOrder ? `&sortBy=price&order=${sortOrder}` : '';
+    const categoryPromises = categories.map(category =>
+        axios.get(`${BASE_URL}/products/category/${category}?${sortParam}&q=phone`)
+    );
+    const categoryResults = await Promise.all(categoryPromises);
+    
+    // Combine and deduplicate products from all categories
+    const allProducts = categoryResults.flatMap(result => result.data.products);
+    const uniqueProducts = Array.from(new Set(allProducts.map(p => p.id)))
+        .map(id => allProducts.find(p => p.id === id));
+    // Sort products by price
+    const sortedProducts = uniqueProducts.sort((a, b) => {
+        if (sortOrder === 'asc') {
+            return a.price - b.price;
+        } else if (sortOrder === 'desc') {
+            return b.price - a.price;
+        }
+        return 0;  // If no sortOrder is provided, keep original order
+    });
+    // Apply pagination
+    const paginatedProducts = sortedProducts.slice(skip, skip + limit);
+    
+    return {
+        products: paginatedProducts,
+        total: uniqueProducts.length,
+        skip,
+        limit
+    };
 };
-
 export const addProduct = async (productData) => {
   const response = await axios.post(`${BASE_URL}/products/add`, productData);
   return response.data;

@@ -1,5 +1,5 @@
 // src/sections/products/view/products-view.jsx
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
@@ -16,28 +16,37 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import Checkbox from '@mui/material/Checkbox';
 import ListItemText from '@mui/material/ListItemText';
+import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import Iconify from 'src/components/iconify';
-
 import ProductCard from '../product-card';
 import ProductDetailsModal from '../product-details-modal';
-import { searchProducts, fetchProducts, fetchAllProducts } from 'src/services/api';
 
-const PRODUCTS_PER_PAGE = 20;
+import {
+    fetchProducts, searchProducts, getProductCategories, getProductsByCategories,
+    addProduct, updateProduct, deleteProduct
+} from 'src/services/api';
+const PRODUCTS_PER_PAGE = 30;
 
 export default function ProductsView({ initialProducts }) {
     const [products, setProducts] = useState(initialProducts);
-    const [allProducts, setAllProducts] = useState([]);
     const [displayedProducts, setDisplayedProducts] = useState(initialProducts);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [sortOrder, setSortOrder] = useState('');
     const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [filterAnchorEl, setFilterAnchorEl] = useState(null);
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const handleFilterClick = (event) => {
         setFilterAnchorEl(event.currentTarget);
     };
@@ -45,113 +54,145 @@ export default function ProductsView({ initialProducts }) {
     const handleFilterClose = () => {
         setFilterAnchorEl(null);
     };
-    const extractCategories = useCallback((products) => {
-        const uniqueCategories = [...new Set(products.map(product => product.category))];
-        setCategories(uniqueCategories);
-    }, []);
+
     const handleCategoryToggle = (category) => {
         setSelectedCategories((prev) => {
-            if (prev.includes(category)) {
-                return prev.filter(c => c !== category);
+            if (prev.some(c => c.slug === category.slug)) {
+                return prev.filter(c => c.slug !== category.slug);
             } else {
                 return [...prev, category];
             }
         });
     };
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setIsLoading(true);
-            const allProductsData = await fetchAllProducts();
-            setAllProducts(allProductsData.products);
-            setProducts(allProductsData.products);
-            setDisplayedProducts(allProductsData.products);
-            extractCategories(allProductsData.products);
-            setIsLoading(false);
-        };
 
-        fetchInitialData();
-    }, []);
-    const loadMoreProducts = useCallback(async () => {
-        if (sortOrder || searchQuery || selectedCategories.length > 0) return; // Don't load more if sorting, searching, or filtering
-
-        const nextPage = page + 1;
-        const newProducts = await fetchProducts(PRODUCTS_PER_PAGE, (nextPage - 1) * PRODUCTS_PER_PAGE);
-
-        if (newProducts.products.length === 0) {
-            setHasMore(false);
-        } else {
-            setProducts(prevProducts => [...prevProducts, ...newProducts.products]);
-            setDisplayedProducts(prevDisplayed => [...prevDisplayed, ...newProducts.products]);
-            setPage(nextPage);
+    const applySort = useCallback((productsToSort) => {
+        console.log("applied sort")
+        if (sortOrder) {
+            return [...productsToSort].sort((a, b) => {
+                return sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
+            });
         }
-    }, [page, sortOrder, searchQuery, selectedCategories]);
+        return productsToSort;
+    }, [sortOrder]);
+
 
     useEffect(() => {
-        const performSearch = async () => {
-            setIsLoading(true);
-            let searchResults;
-            if (searchQuery) {
-                searchResults = await searchProducts(searchQuery);
-                searchResults = searchResults.products;
-            } else {
-                searchResults = [...allProducts];
+        const fetchCategories = async () => {
+            try {
+                const categoriesData = await getProductCategories();
+                console.log('Fetched categories:', categoriesData);
+                setCategories(categoriesData);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
             }
+        };
 
-            // Apply category filter
-            if (selectedCategories.length > 0) {
-                searchResults = searchResults.filter(product =>
-                    selectedCategories.includes(product.category)
-                );
-            }
+        fetchCategories();
+    }, []);
 
-            // Apply sorting
-            if (sortOrder) {
-                searchResults.sort((a, b) => {
-                    if (sortOrder === 'asc') {
-                        return a.price - b.price;
-                    } else {
-                        return b.price - a.price;
-                    }
-                });
-            }
+    const loadMoreProducts = useCallback(async () => {
+        console.log('loadMoreProducts called. Current state:', {
+            page,
+            sortOrder,
+            searchQuery,
+            selectedCategories: selectedCategories.map(c => c.name),
+            productsLength: products.length,
+            displayedProductsLength: displayedProducts.length,
+            totalProducts
+        });
 
-            setDisplayedProducts(searchResults);
-            setIsLoading(false);
+        if (products.length >= totalProducts) {
+            console.log('All products loaded. Setting hasMore to false.');
             setHasMore(false);
-            setPage(1);
-        };
+            return;
+        }
 
-        performSearch();
-    }, [searchQuery, selectedCategories, sortOrder, allProducts]);
-    useEffect(() => {
-        const applySortAndFilter = async () => {
-            setIsLoading(true);
-            let productsToSort = [...(searchQuery ? displayedProducts : allProducts)];
+        try {
+            const skip = products.length;
+            let newProducts;
 
-            // Apply category filter
-            if (selectedCategories.length > 0) {
-                productsToSort = productsToSort.filter(product =>
-                    selectedCategories.includes(product.category)
-                );
+            if (searchQuery) {
+                newProducts = await searchProducts(searchQuery, PRODUCTS_PER_PAGE, skip, sortOrder);
+            } else if (selectedCategories.length > 0) {
+                const categories = selectedCategories.map(c => c.slug);
+                newProducts = await getProductsByCategories(categories, PRODUCTS_PER_PAGE, skip, sortOrder);
+            } else {
+                newProducts = await fetchProducts(PRODUCTS_PER_PAGE, skip, sortOrder);
             }
 
-            // Apply sorting
-            if (sortOrder) {
-                productsToSort.sort((a, b) => {
-                    if (sortOrder === 'asc') {
-                        return a.price - b.price;
-                    } else {
-                        return b.price - a.price;
-                    }
+            console.log('Loaded more products:', newProducts);
+
+            if (newProducts.products.length === 0) {
+                console.log('No more products to load. Setting hasMore to false.');
+                setHasMore(false);
+            } else {
+                const updatedProducts = [...products, ...newProducts.products];
+                const sortedProducts = applySort(updatedProducts);
+
+                console.log('Updating state:', {
+                    newProductsCount: newProducts.products.length,
+                    updatedProductsLength: sortedProducts.length,
+                    totalProducts: newProducts.total
                 });
-            }
 
-            setDisplayedProducts(productsToSort);
+                setProducts(sortedProducts);
+                setDisplayedProducts(sortedProducts);
+                setPage(prevPage => prevPage + 1);
+                setTotalProducts(newProducts.total);
+                setHasMore(sortedProducts.length < newProducts.total);
+            }
+        } catch (error) {
+            console.error('Error loading more products:', error);
+        } finally {
             setIsLoading(false);
+        }
+    }, [page, sortOrder, searchQuery, selectedCategories, products, totalProducts, applySort]);
+
+    useEffect(() => {
+        const applyFiltersAndSort = async () => {
+            setIsLoading(true);
+            setPage(0);
+            try {
+                let newProducts;
+
+                if (searchQuery) {
+                    newProducts = await searchProducts(searchQuery, PRODUCTS_PER_PAGE, 0,sortOrder);
+                } else if (selectedCategories.length > 0) {
+                    const categories = selectedCategories.map(c => c.slug);
+                    newProducts = await getProductsByCategories(categories, PRODUCTS_PER_PAGE, 0,sortOrder);
+                } else {
+                    console.log(sortOrder)
+                    newProducts = await fetchProducts(PRODUCTS_PER_PAGE, 0,sortOrder);
+                }
+
+                const sortedProducts = applySort(newProducts.products);
+
+                console.log('Filtered and sorted products:', sortedProducts);
+
+                setProducts(sortedProducts);
+                setDisplayedProducts(sortedProducts);
+                setTotalProducts(newProducts.total);
+                setHasMore(sortedProducts.length < newProducts.total);
+                setPage(1);
+            } catch (error) {
+                console.error('Error applying filters and sort:', error);
+            } finally {
+                setIsLoading(false);
+            }
         };
 
-        applySortAndFilter();
-    }, [sortOrder, selectedCategories, allProducts, searchQuery]);
+        applyFiltersAndSort();
+    }, [searchQuery,sortOrder, selectedCategories, applySort]);
+
+    // useEffect(() => {
+    //     const sortAllProducts = () => {
+    //         const sortedProducts = applySort(products);
+    //         setProducts(sortedProducts);
+    //         setDisplayedProducts(sortedProducts);
+    //     };
+
+    //     sortAllProducts();
+    // }, [sortOrder, products, applySort]);
     const handleProductClick = (product) => {
         setSelectedProduct(product);
         setModalOpen(true);
@@ -161,6 +202,23 @@ export default function ProductsView({ initialProducts }) {
         setModalOpen(false);
     };
 
+    const productGrid = useMemo(() => (
+        <Grid container spacing={3}>
+            {displayedProducts.map((product) => (
+                <Grid key={product.id} xs={12} sm={6} md={3}>
+                    <ProductCard product={product} onProductClick={() => handleProductClick(product)} />
+                </Grid>
+            ))}
+        </Grid>
+    ), [displayedProducts]);
+    useEffect(() => {
+        console.log('State updated:', {
+            productsLength: products.length,
+            displayedProductsLength: displayedProducts.length,
+            page,
+            hasMore
+        });
+    }, [products, displayedProducts, page, hasMore]);
     return (
         <Container>
             <Typography variant="h4" sx={{ mb: 5 }}>
@@ -210,9 +268,9 @@ export default function ProductsView({ initialProducts }) {
                 onClose={handleFilterClose}
             >
                 {categories.map((category) => (
-                    <MenuItem key={category} onClick={() => handleCategoryToggle(category)}>
-                        <Checkbox checked={selectedCategories.includes(category)} />
-                        <ListItemText primary={category} />
+                    <MenuItem key={category.slug} onClick={() => handleCategoryToggle(category)}>
+                        <Checkbox checked={selectedCategories.some(c => c.slug === category.slug)} />
+                        <ListItemText primary={category.name} />
                     </MenuItem>
                 ))}
             </Menu>
@@ -236,13 +294,7 @@ export default function ProductsView({ initialProducts }) {
                         </Typography>
                     }
                 >
-                    <Grid container spacing={3}>
-                        {displayedProducts.map((product) => (
-                            <Grid key={product.id} xs={12} sm={6} md={3}>
-                                <ProductCard product={product} onProductClick={() => handleProductClick(product)} />
-                            </Grid>
-                        ))}
-                    </Grid>
+                    {productGrid}
                 </InfiniteScroll>
             )}
 
