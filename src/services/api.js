@@ -95,6 +95,15 @@ export const getProductCategories = async () => {
   console.log(response.data)
   return response.data;
 };
+export const fetchAllProducts = async () => {
+    // Fetch the total count of products first
+    const countResponse = await axios.get(`${BASE_URL}/products`);
+    const totalProducts = countResponse.data.total;
+  
+    // Then fetch all products
+    const response = await axios.get(`${BASE_URL}/products?limit=${totalProducts}`);
+    return response.data;
+  };
 
 export const getProductsByCategories = async (categories, limit = 30, skip = 0, sortOrder = '') => {
     // Fetch all products for all categories
